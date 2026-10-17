@@ -1,0 +1,38 @@
+
+name: Extract LeviSoloClient ZIP
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract source ZIP
+        run: |
+          ZIP=$(find . -maxdepth 1 -name '*.zip' -print -quit)
+          if [ -z "$ZIP" ]; then
+            echo "No ZIP file found in repository root"
+            exit 1
+          fi
+          mkdir /tmp/levi-source
+          unzip -o "$ZIP" -d /tmp/levi-source
+          cp -an /tmp/levi-source/LeviSoloClient/. .
+          rm -f "$ZIP"
+
+      - name: Commit extracted files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Extract LeviSoloClient source"
+            git push
+          fi
+          
